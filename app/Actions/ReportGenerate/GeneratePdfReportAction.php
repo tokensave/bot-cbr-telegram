@@ -24,9 +24,9 @@ class GeneratePdfReportAction
         $relativePath = "tmp/companies/{$fileName}";
 
         // Сохраняем PDF как строку
-        Storage::disk('private')->put($relativePath, $pdf->output());
+        Storage::disk('public')->put($relativePath, $pdf->output());
 
         // Возвращаем абсолютный путь до файла
-        return Storage::disk('private')->path($relativePath);
+        return Storage::disk('public')->path($relativePath);
     }
 }

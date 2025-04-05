@@ -16,6 +16,7 @@
             text-align: left;
         }
     </style>
+    <title>Отчет по компаниям</title>
 </head>
 <body>
 <table>
@@ -34,7 +35,7 @@
             <td>{{ $company['name'] }}</td>
             <td>{{ $company['description'] }}</td>
             <td style="background-color: {{ $company['color_code'] === 'green' ? '#c8e6c9' : '#ffcdd2' }}">
-                {{ $company['risk_level'] }}
+                {{ \App\Enums\ReportDataEnums\CompanyRiskLevelEnum::from($company['risk_level'])->label() }}
             </td>
         </tr>
     @endforeach

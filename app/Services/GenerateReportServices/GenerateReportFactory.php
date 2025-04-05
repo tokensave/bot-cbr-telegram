@@ -20,7 +20,7 @@ class GenerateReportFactory
     {
         return match ($this->format) {
             ReportFormatEnum::EXCEL->value => app(ExcelReportService::class),
-            ReportFormatEnum::PDF->value => app(PDFReportService::class),
+            ReportFormatEnum::PDF->value => app(PdfReportService::class),
             default => throw new InvalidArgumentException("Неизвестный формат: {$this->format}"),
         };
     }

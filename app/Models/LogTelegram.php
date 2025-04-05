@@ -13,7 +13,6 @@ class LogTelegram extends Model
         'type',
         'telegraph_chat_id',
         'data',
-        'msg',
     ];
 
     protected $casts = [

@@ -8,12 +8,14 @@ namespace App\Http\Webhooks;
 use App\Enums\ReportFormatEnum;
 use App\Http\Webhooks\Traits\Telegram\GenerateReportTrait;
 use App\Http\Webhooks\Traits\Telegram\Support;
+use App\Models\LogTelegram;
 use DefStudio\Telegraph\Exceptions\FileException;
 use DefStudio\Telegraph\Exceptions\StorageException;
 use DefStudio\Telegraph\Handlers\WebhookHandler;
 use DefStudio\Telegraph\Keyboard\Button;
 use DefStudio\Telegraph\Keyboard\Keyboard;
 use Illuminate\Contracts\Container\BindingResolutionException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Stringable;
 
 class TelegramWebhook extends WebhookHandler
@@ -56,7 +58,12 @@ class TelegramWebhook extends WebhookHandler
         try {
             $this->parseData();
         } catch (FileException|StorageException|BindingResolutionException $e) {
-            $this->sendMsg('Что то пошло не так. Отправьте это сообщение разработчику: ' . $e->getMessage(), null, 0);
+            Log::info('Telegram webhook error: ' . $e->getMessage(),['trace' => $e->getMessage()]);
+            $keyboard = Keyboard::make()->buttons([
+                Button::make('Вернутся в начало')
+                ->action('cancelDeal')
+            ]);
+            $this->sendMsg('Что то пошло не так. Отправьте это сообщение разработчику: ' . $e->getMessage(), $keyboard);
         }
     }
 

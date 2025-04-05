@@ -40,11 +40,11 @@ trait GenerateReportTrait
         // Генерируем отчёт, передавая данные компаний
         $exportFile = $reportGenerator->generateReport($companies);
         if (!file_exists($exportFile)) {
-            \Log::error("Файл для отправки не найден: $exportFile");
+            Log::error("Файл для отправки не найден: $exportFile");
             return;
         }
 
-        \Log::info("Отправка PDF в Telegram: $exportFile");
+        Log::info("Отправка PDF в Telegram: $exportFile");
         $this->chat->document($exportFile)->send();
         $this->finishExcelReportDeal($exportFile);
     }

@@ -23,28 +23,34 @@ class ExcelParserTest extends TestCase
         $filename = 'test_excel_' . time() . '.xlsx';
         $filePath = storage_path("app/private/tmp/companies/{$filename}");
 
-        // Убеждаемся, что директория есть
         if (!is_dir(dirname($filePath))) {
             mkdir(dirname($filePath), 0777, true);
         }
 
-        // Записываем тестовые данные
+        // Пишем тестовые данные: два ИНН и одна строка с "без НДС"
         SimpleExcelWriter::create($filePath)
-            ->addRow(['ИНН'])
-            ->addRow(['7707083893'])
-            ->addRow(['7708236451'])
+            ->addRow(['ИНН', 'Комментарий'])
+            ->addRow(['7707083893', 'без НДС'])
+            ->addRow(['7708236451', 'С НДС'])
             ->close();
 
-        // Тестируем парсинг
-        $innList = $this->service->parse($filePath);
+        // Вызываем парсинг
+        $result = $this->service->parse($filePath);
 
-        // Проверяем, что вернулся массив с ИНН
-        $this->assertIsArray($innList);
-        $this->assertCount(2, $innList);
-        $this->assertContains('7707083893', $innList);
-        $this->assertContains('7708236451', $innList);
+        // Проверка структуры результата
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('innList', $result);
+        $this->assertArrayHasKey('non_vat_percentage', $result);
 
-        // Удаляем временный файл
+        // Проверка ИНН
+        $this->assertCount(2, $result['innList']);
+        $this->assertContains('7707083893', $result['innList']);
+        $this->assertContains('7708236451', $result['innList']);
+
+        // Проверка расчета процента без НДС
+        $this->assertEquals(50.0, $result['non_vat_percentage']);
+
+        // Удаляем файл
         unlink($filePath);
     }
 }

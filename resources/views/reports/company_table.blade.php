@@ -9,6 +9,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 20px;
         }
         th, td {
             border: 1px solid #000;
@@ -41,5 +42,7 @@
     @endforeach
     </tbody>
 </table>
+
+<p><strong>Процент операций без НДС:</strong> {{ round($nonVatPercentage, 2) }}%</p>
 </body>
 </html>

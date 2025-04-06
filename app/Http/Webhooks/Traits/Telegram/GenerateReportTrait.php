@@ -32,13 +32,23 @@ trait GenerateReportTrait
             Storage::path('/tmp/companies'),
             $doc['filename']
         );
-        $innList = app(ExcelParserService::class)->parse($file);
+        $parsedData = app(ExcelParserService::class)->parse($file);
+        $innList = $parsedData['innList'];
+        $nonVatPercentage = $parsedData['non_vat_percentage'];
+
         $companies = app(CompaniesService::class)->getCompany($innList);
+
+        // Объединяем данные для отчёта
+        $reportData = [
+            'companies' => $companies,
+            'non_vat_percentage' => $nonVatPercentage,
+        ];
         $reportFactory = app()->makeWith(GenerateReportFactory::class, ['format' => $report_format]);
         $reportGenerator = $reportFactory->generateReport();
 
         // Генерируем отчёт, передавая данные компаний
-        $exportFile = $reportGenerator->generateReport($companies);
+        $exportFile = $reportGenerator->generateReport($reportData);
+
         if (!file_exists($exportFile)) {
             Log::error("Файл для отправки не найден: $exportFile");
             return;

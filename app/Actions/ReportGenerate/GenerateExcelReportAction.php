@@ -5,40 +5,40 @@ declare(ticks=1000);
 
 namespace App\Actions\ReportGenerate;
 
+use Illuminate\Support\Facades\Log;
 use OpenSpout\Common\Entity\Style\Color;
 use OpenSpout\Common\Entity\Style\Style;
 use Spatie\SimpleExcel\SimpleExcelWriter;
 
 /**
- * Генерирует Excel-отчёт с применением стилей для каждой строки.
+ * Генерирует Excel-отчёт с данными компаний и итоговым процентом платежей без НДС.
  *
- * @param array $data Массив данных компаний.
- * @return string
+ * @param array $data Массив с ключами:
+ *                    - 'companies': данные компаний,
+ *                    - 'non_vat_percentage': процент платежей без НДС.
+ * @return string Путь до сгенерированного файла.
  */
 class GenerateExcelReportAction
 {
     public function __invoke(array $data): string
     {
-        // Указываем путь для сохранения отчёта
-        $uniqueName = 'report' . time()  . '.xlsx';
+        $companies = $data['companies'] ?? [];
+        $nonVatPercentage = $data['non_vat_percentage'] ?? 0;
+
+        $uniqueName = 'report' . time() . '.xlsx';
         $pathToFile = storage_path("app/private/tmp/companies/{$uniqueName}");
 
-        // Создаем экземпляр писателя. Если путь оканчивается на .xlsx, то будет создан Excel-файл.
         $writer = SimpleExcelWriter::create($pathToFile);
 
-        // Опционально: задаем заголовки вручную
+        // Заголовки
         $writer->addHeader(['ИНН', 'Наименование', 'Описание']);
 
-        // Проходим по данным и для каждой строки формируем стиль на основе поля color_code
-        foreach ($data as $company) {
-            // Пример: если значение color_code совпадает с одной из констант OpenSpout, можно использовать его напрямую.
-            // Если нет, можно сделать сопоставление (например, #00FF00 -> Color::GREEN)
-            // Здесь для примера предполагается, что color_code содержит корректное значение для OpenSpout, например, 'GREEN'
+        // Данные компаний
+        foreach ($companies as $company) {
             $backgroundColor = defined("OpenSpout\\Common\\Entity\\Style\\Color::" . strtoupper($company['color_code']))
                 ? constant("OpenSpout\\Common\\Entity\\Style\\Color::" . strtoupper($company['color_code']))
                 : Color::WHITE;
 
-            // Создаем стиль для всей строки (можно применить стиль и к отдельной ячейке, если нужно)
             $style = (new Style())
                 ->setBackgroundColor($backgroundColor);
 
@@ -49,7 +49,13 @@ class GenerateExcelReportAction
             ], $style);
         }
 
-        // Завершаем запись файла
+        // Итоговая строка с процентом
+        $writer->addRow([
+            'Итого',
+            'Платежи без НДС:',
+            round($nonVatPercentage, 2) . '%',
+        ]);
+
         $writer->close();
         return $pathToFile;
     }

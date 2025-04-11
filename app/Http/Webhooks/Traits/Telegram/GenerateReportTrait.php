@@ -25,36 +25,24 @@ trait GenerateReportTrait
      */
     protected function parseData(): void
     {
-        $report_format = $this->chat->storage()->get('report_format');
+        $reportFormat = $this->chat->storage()->get('report_format');
         $doc = $this->message->document()?->toArray() ?? [];
         $file = Telegraph::store(
             $doc['id'],
             Storage::path('/tmp/companies'),
             $doc['filename']
         );
-        $parsedData = app(ExcelParserService::class)->parse($file);
-        $innList = $parsedData['innList'];
-        $nonVatPercentage = $parsedData['non_vat_percentage'];
 
-        $companies = app(CompaniesService::class)->getCompany($innList);
+        $parsedData = $this->parseClientData($file);
 
-        // Объединяем данные для отчёта
-        $reportData = [
-            'companies' => $companies,
-            'non_vat_percentage' => $nonVatPercentage,
-        ];
-        $reportFactory = app()->makeWith(GenerateReportFactory::class, ['format' => $report_format]);
-        $reportGenerator = $reportFactory->generateReport();
-
-        // Генерируем отчёт, передавая данные компаний
-        $exportFile = $reportGenerator->generateReport($reportData);
+        $exportFile = $this->generateReportDeal($reportFormat, $parsedData);
 
         if (!file_exists($exportFile)) {
             Log::error("Файл для отправки не найден: $exportFile");
             return;
         }
 
-        Log::info("Отправка PDF в Telegram: $exportFile");
+        Log::info("Отправка $reportFormat в Telegram: $exportFile");
         $this->chat->document($exportFile)->send();
         $this->finishExcelReportDeal($exportFile);
     }
@@ -65,5 +53,28 @@ trait GenerateReportTrait
     public function return(): void
     {
         $this->cancelAction();
+    }
+
+    private function parseClientData(string $file): array
+    {
+        $parsedData = app(ExcelParserService::class)->parse($file);
+        $innList = $parsedData['innList'];
+        $nonVatPercentage = $parsedData['non_vat_percentage'];
+        $companies = app(CompaniesService::class)->getCompany($innList);
+        // Объединяем данные для отчёта
+        return [
+            'companies' => $companies,
+            'non_vat_percentage' => $nonVatPercentage,
+        ];
+    }
+
+    /**
+     * @throws BindingResolutionException
+     */
+    private function generateReportDeal(mixed $reportFormat, array $parseData): string
+    {
+        $reportFactory = app()->makeWith(GenerateReportFactory::class, ['format' => $reportFormat]);
+        // Генерируем отчёт, передавая данные компаний
+        return $reportFactory->generateReport()->generateReport($parseData);
     }
 }

@@ -52,13 +52,13 @@ trait Support
     protected function loggerResponse(TelegraphResponse $response): void
     {
         if ($response->telegraphError()) {
-            LogTelegram::create([
+            LogTelegram::query()->create([
                 'telegraph_chat_id' => $this->chat->id,
                 'data' => $response->body(),
             ]);
         }
         if ($response->telegraphOk()) {
-            LogTelegram::create([
+            LogTelegram::query()->create([
                 'type' => LogTelegramEnum::SEND,
                 'telegraph_chat_id' => $this->chat->id,
                 'data' => $response->body(),

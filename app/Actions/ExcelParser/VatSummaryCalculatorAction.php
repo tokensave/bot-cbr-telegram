@@ -18,18 +18,22 @@ class VatSummaryCalculatorAction
 
     public function __invoke(array $withVatAmounts, array $withoutVatAmounts): float
     {
-        $flatten = static function (array $amountGroups): array {
+        // Просто очищаем каждое значение в обоих массивах
+        $normalizeValues = static function (array $values): array {
             return array_map(static function (string $value) {
-                return (float) str_replace([' ', ','], ['','.' ], $value);
-            }, array_merge(...$amountGroups));
+                return (float) str_replace([' ', ','], ['', '.'], $value);
+            }, $values);
         };
 
-        $withVatFlat = $flatten($withVatAmounts);
-        $withoutVatFlat = $flatten($withoutVatAmounts);
+        // Применяем очистку к обоим массивам
+        $withVatFlat = $normalizeValues($withVatAmounts);
+        $withoutVatFlat = $normalizeValues($withoutVatAmounts);
 
+        // Высчитываем суммы
         $withVatSum = array_sum($withVatFlat);
         $withoutVatSum = array_sum($withoutVatFlat);
 
+        // Рассчитываем общий оборот и процент без НДС
         $total = $withVatSum + $withoutVatSum;
 
         return $total > 0 ? round(($withoutVatSum / $total) * 100, 2) : 0.0;
